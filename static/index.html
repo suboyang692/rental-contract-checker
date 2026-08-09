@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>租房合同风险审查助手</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #f5f6fa; color: #2b2f36; padding: 32px 16px;
+  }
+  .container { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .sub { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+
+  #drop {
+    border: 2px dashed #c3c9d4; border-radius: 12px; background: #fff;
+    padding: 48px 20px; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s; color: #6b7280;
+  }
+  #drop:hover, #drop.drag { border-color: #4f7cff; background: #f2f6ff; color: #4f7cff; }
+  #drop .icon { font-size: 40px; margin-bottom: 12px; }
+  #drop input { display: none; }
+
+  #loading {
+    display: none; margin-top: 24px; background: #fff; border-radius: 12px;
+    padding: 24px; border: 1px solid #e5e7eb;
+  }
+  #loading .spinner {
+    width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #4f7cff;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    display: inline-block; vertical-align: middle; margin-right: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading .steps { margin-top: 12px; font-size: 14px; color: #6b7280; line-height: 1.8; }
+
+  #result { display: none; margin-top: 24px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
+  .card h2 { font-size: 17px; margin-bottom: 12px; }
+
+  .badge { display: inline-block; padding: 6px 14px; border-radius: 999px; font-size: 15px; font-weight: 600; color: #fff; }
+  .badge.high { background: #d93025; }
+  .badge.medium { background: #f9ab00; }
+  .badge.low { background: #188038; }
+  .summary-text { margin-top: 10px; font-size: 15px; line-height: 1.7; }
+
+  .finding { border-left: 4px solid #e5e7eb; padding: 10px 14px; margin-bottom: 12px; border-radius: 6px; background: #fafbfc; }
+  .finding.high { border-left-color: #d93025; }
+  .finding.medium { border-left-color: #f9ab00; }
+  .finding .name { font-weight: 600; margin-bottom: 6px; }
+  .finding .matched { font-size: 13px; color: #374151; background: #f0f1f4; padding: 6px 10px; border-radius: 6px; margin: 6px 0; word-break: break-all; }
+  .finding .sugg { font-size: 13px; color: #6b7280; line-height: 1.6; }
+  .count-note { font-size: 13px; color: #6b7280; margin-top: 8px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: #fafbfc; white-space: nowrap; }
+  td { line-height: 1.6; word-break: break-all; }
+
+  pre { background: #f8f9fb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; font-size: 12px; line-height: 1.6; max-height: 320px; overflow: auto; white-space: pre-wrap; }
+
+  .btn { display: inline-block; background: #4f7cff; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; }
+  .btn:hover { background: #3c66e0; }
+  .btn.gray { background: #e5e7eb; color: #374151; margin-left: 8px; }
+  .btn.gray:hover { background: #d5d9e0; }
+
+  #historyList { margin-top: 4px; }
+  .hist-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px;
+    margin-bottom: 8px; cursor: pointer; background: #fafbfc; font-size: 14px;
+  }
+  .hist-item:hover { border-color: #4f7cff; background: #f2f6ff; }
+  .hist-item .left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .hist-item .fname { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist-item .time { color: #9aa0a8; font-size: 12px; }
+  .hist-count { font-size: 13px; color: #6b7280; flex-shrink: 0; }
+  .hist-empty { color: #9aa0a8; font-size: 13px; text-align: center; padding: 12px; }
+
+  #error { display: none; margin-top: 16px; background: #fdecec; color: #b3261e; border: 1px solid #f5c6c0; border-radius: 10px; padding: 14px 18px; font-size: 14px; }
+  .muted { color: #9aa0a8; font-size: 12px; margin-top: 24px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🏠 租房合同风险审查助手</h1>
+  <div class="sub">上传租房合同 PDF，自动识别押金、违约金、维修责任等陷阱条款，并生成风险报告</div>
+
+  <div id="drop">
+    <div class="icon">📄</div>
+    <div>点击选择 或 拖拽 PDF 到此处</div>
+    <div style="font-size:12px;margin-top:8px;color:#9aa0a8">支持 .pdf（扫描件暂不支持）</div>
+    <input type="file" id="file" accept=".pdf">
+  </div>
+
+  <div id="loading">
+    <span class="spinner"></span>正在分析，请稍候…
+    <div class="steps">
+      1️⃣ 提取 PDF 文本<br>
+      2️⃣ 规则引擎扫描高频陷阱条款<br>
+      3️⃣ 大模型抽取关键条款并总结风险（约 10~20 秒）
+    </div>
+  </div>
+
+  <div id="error"></div>
+
+  <div id="result">
+    <div class="card">
+      <h2>总体结论</h2>
+      <span id="badge" class="badge high">高风险</span>
+      <div class="count-note" id="countNote"></div>
+      <div class="summary-text" id="summary"></div>
+    </div>
+
+    <div class="card" id="highCard" style="display:none">
+      <h2>🔴 高风险条款</h2>
+      <div id="highList"></div>
+    </div>
+
+    <div class="card" id="mediumCard" style="display:none">
+      <h2>🟡 中风险条款</h2>
+      <div id="mediumList"></div>
+    </div>
+
+    <div class="card">
+      <h2>关键条款（大模型抽取）</h2>
+      <table id="infoTable"></table>
+    </div>
+
+    <div class="card">
+      <h2>完整 Markdown 报告</h2>
+      <pre id="reportMd"></pre>
+      <div style="margin-top:12px">
+        <button class="btn" id="download">下载报告.md</button>
+        <button class="btn gray" id="again">再测一份</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 最近分析（SQLite 历史）</h2>
+    <div id="historyList"><div class="hist-empty">加载中…</div></div>
+  </div>
+
+  <div class="muted">本地演示项目 · 规则引擎 + LLM 双引擎 · 仅供学习交流</div>
+</div>
+
+<script>
+  const drop = document.getElementById('drop');
+  const fileInput = document.getElementById('file');
+  const loading = document.getElementById('loading');
+  const errorBox = document.getElementById('error');
+  const result = document.getElementById('result');
+
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); if (e.dataTransfer.files[0]) start(e.dataTransfer.files[0]); });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) start(fileInput.files[0]); });
+  document.getElementById('again').addEventListener('click', () => location.reload());
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  async function start(file) {
+    errorBox.style.display = 'none';
+    result.style.display = 'none';
+    loading.style.display = 'block';
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const resp = await fetch('/analyze_pdf', { method: 'POST', body: fd });
+      const data = await resp.json();
+      loading.style.display = 'none';
+      if (!resp.ok || data.status !== 'ok') {
+        showError(data.detail || '分析失败，请检查后端日志');
+        return;
+      }
+      render(data);
+      loadHistory();
+    } catch (err) {
+      loading.style.display = 'none';
+      showError('请求失败：' + err.message);
+    }
+  }
+
+  function showError(msg) { errorBox.textContent = '❌ ' + msg; errorBox.style.display = 'block'; }
+
+  function render(data) {
+    result.style.display = 'block';
+    const high = data.findings.filter(f => f.severity === '高');
+    const medium = data.findings.filter(f => f.severity === '中');
+    const level = high.length ? 'high' : (medium.length ? 'medium' : 'low');
+    const label = high.length ? '高风险' : (medium.length ? '中风险' : '低风险');
+    const badge = document.getElementById('badge');
+    badge.textContent = label;
+    badge.className = 'badge ' + level;
+    document.getElementById('countNote').textContent =
+      `共发现 ${data.finding_count} 处风险（高风险 ${high.length} 处 / 中风险 ${medium.length} 处）`;
+
+    const summary = document.getElementById('summary');
+    if (data.extracted && data.extracted.risk_summary) {
+      summary.innerHTML = '<strong>LLM 总结：</strong>' + esc(data.extracted.risk_summary);
+    } else {
+      summary.textContent = '（LLM 抽取失败，仅展示规则结果）';
+    }
+
+    renderFindings('high', high, document.getElementById('highList'), document.getElementById('highCard'));
+    renderFindings('medium', medium, document.getElementById('mediumList'), document.getElementById('mediumCard'));
+
+    const table = document.getElementById('infoTable');
+    const labels = {
+      rent_amount: '每月租金', deposit_amount: '押金金额', lease_term: '租期',
+      payment_method: '支付方式', penalty_clause: '违约金条款', repair_responsibility: '维修责任',
+      sublease_clause: '转租条款', early_termination: '提前退租'
+    };
+    table.innerHTML = '<tr><th>字段</th><th>内容</th></tr>';
+    if (data.extracted) {
+      for (const [key, label] of Object.entries(labels)) {
+        const v = data.extracted[key];
+        table.innerHTML += `<tr><td>${label}</td><td>${v ? esc(v) : '未填写/未提取到'}</td></tr>`;
+      }
+    } else {
+      table.innerHTML += '<tr><td colspan="2">LLM 抽取失败</td></tr>';
+    }
+
+    const md = document.getElementById('reportMd');
+    md.textContent = data.report;
+
+    document.getElementById('download').onclick = () => {
+      const blob = new Blob([data.report], { type: 'text/markdown;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (data.file_name || '合同') + '_风险报告.md';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+  }
+
+  function renderFindings(sev, items, listEl, cardEl) {
+    if (!items.length) { cardEl.style.display = 'none'; return; }
+    cardEl.style.display = 'block';
+    listEl.innerHTML = items.map(f => `
+      <div class="finding ${sev}">
+        <div class="name">${esc(f.rule_name)}</div>
+        <div class="matched">命中：${esc(f.matched)}</div>
+        <div class="sugg">💡 ${esc(f.suggestion)}</div>
+      </div>`).join('');
+  }
+
+  async function loadHistory() {
+    const list = document.getElementById('historyList');
+    try {
+      const resp = await fetch('/history');
+      const data = await resp.json();
+      if (!resp.ok || data.status !== 'ok' || !data.items.length) {
+        list.innerHTML = '<div class="hist-empty">暂无分析记录，先上传一份合同试试</div>';
+        return;
+      }
+      list.innerHTML = data.items.map(it => `
+        <div class="hist-item" onclick="viewHistory(${it.id})">
+          <div class="left">
+            <span>📄</span>
+            <span class="fname">${esc(it.file_name)}</span>
+          </div>
+          <div class="hist-count">${it.finding_count} 处风险 · ${esc(it.created_at)}</div>
+        </div>`).join('');
+    } catch (err) {
+      list.innerHTML = '<div class="hist-empty">历史记录加载失败</div>';
+    }
+  }
+
+  async function viewHistory(id) {
+    try {
+      const resp = await fetch('/history/' + id);
+      const data = await resp.json();
+      if (!resp.ok || data.status !== 'ok') { showError('历史记录读取失败'); return; }
+      result.style.display = 'none';
+      render(data);
+      result.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      showError('历史记录读取失败：' + err.message);
+    }
+  }
+
+  loadHistory();
+</script>
+</body>
+</html>

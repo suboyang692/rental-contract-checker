@@ -1,0 +1,34 @@
+{
+  "test1.pdf": [],
+  "test2.pdf": [
+    { "rule_id": "R01", "keyword": "押金是否退还由甲方决定" },
+    { "rule_id": "R04", "keyword": "均由乙方独自承担" },
+    { "rule_id": "R03", "keyword": "没收乙方全部租赁押金" },
+    { "rule_id": "R01", "keyword": "没收乙方全部租赁押金" },
+    { "rule_id": "R03", "keyword": "全部连带责任" },
+    { "rule_id": "R01", "keyword": "没收押金" },
+    { "rule_id": "R01", "keyword": "没收全部押金" },
+    { "rule_id": "R05", "keyword": "乙方提前退租" },
+    { "rule_id": "R02", "keyword": "全部租金的50%" },
+    { "rule_id": "R03", "keyword": "转租、转借房屋的" },
+    { "rule_id": "R01", "keyword": "由甲方酌情" },
+    { "rule_id": "R01", "keyword": "由甲方决定" }
+  ],
+  "test3.pdf": [
+    { "rule_id": "R06", "keyword": "单方面调整本合同租金" },
+    { "rule_id": "R04", "keyword": "均由乙方全额承担" },
+    { "rule_id": "R04", "keyword": "均由乙方独立承担" },
+    { "rule_id": "R03", "keyword": "转借、分租、转让给任何第三方" },
+    { "rule_id": "R01", "keyword": "没收乙方已缴纳的全部租赁押金" },
+    { "rule_id": "R03", "keyword": "承担连带责任" },
+    { "rule_id": "R01", "keyword": "没收押金" },
+    { "rule_id": "R01", "keyword": "没收全部押金" },
+    { "rule_id": "R05", "keyword": "乙方擅自提前退租" },
+    { "rule_id": "R02", "keyword": "全部租金的50%" },
+    { "rule_id": "R01", "keyword": "押金不予退还" },
+    { "rule_id": "R03", "keyword": "擅自转租的" },
+    { "rule_id": "R06", "keyword": "单方租金调整" },
+    { "rule_id": "R01", "keyword": "由甲方酌情" },
+    { "rule_id": "R01", "keyword": "由甲方决定" }
+  ]
+}
