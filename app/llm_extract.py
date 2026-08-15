@@ -8,7 +8,11 @@ from . import config
 
 
 def get_client() -> OpenAI:
-    return OpenAI(api_key=config.DASHSCOPE_API_KEY, base_url=config.LLM_BASE_URL)
+    return OpenAI(
+        api_key=config.DASHSCOPE_API_KEY,
+        base_url=config.LLM_BASE_URL,
+        timeout=30.0,  # 30 秒超时，防止 API 卡住时接口长时间挂起（超时走降级逻辑）
+    )
 
 
 def quick_test() -> str:

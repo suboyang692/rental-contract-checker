@@ -65,12 +65,26 @@ def analyze(req: AnalyzeRequest):
 @app.post("/analyze_pdf")
 def analyze_pdf(file: UploadFile = File(...)):
     """上传 PDF → 提取文本 → 规则 + LLM → 风险报告"""
+    MAX_SIZE = 20 * 1024 * 1024  # 20MB 上限，防超大文件拖垮服务
+    content = file.file.read(MAX_SIZE + 1)
+    if len(content) > MAX_SIZE:
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "detail": "文件过大，仅支持 20MB 以内的 PDF"},
+        )
     suffix = Path(file.filename or "contract.pdf").suffix or ".pdf"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(file.file.read())
+        tmp.write(content)
         tmp_path = tmp.name
     try:
-        text = extract_text(tmp_path)
+        try:
+            text = extract_text(tmp_path)
+        except Exception as exc:
+            print(f"[analyze_pdf] PDF 解析失败: {exc}")
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "detail": "PDF 解析失败，请确认上传的是有效的 PDF 文件（扫描件暂不支持）"},
+            )
     finally:
         try:
             os.unlink(tmp_path)

@@ -1,6 +1,11 @@
 """批量测试 samples 下的所有 PDF，确认都能提取出文本"""
 import glob
 import os
+import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")  # 兼容 Windows GBK 控制台（✓/✅ 打印会触发 UnicodeEncodeError）
+
 
 from app.pdf_parser import extract_summary
 
